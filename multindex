@@ -1,0 +1,61 @@
+#这是部分使用万矿平台（windquant）进行数据处理的心得笔记
+#需要import的库：
+from WindPy import *
+from WindAlgo import * #引入回测框架
+import WindAlpha as wa
+from datetime import *
+import pandas as pd
+import statsmodels.api as sm #最小二乘
+from statsmodels.formula.api import ols #加载ols模型
+import matplotlib.pyplot as plt
+from array import array
+import numpy as np
+import copy
+import numpy.linalg as la  #作线性运算
+w.start(show_welcome=False)
+
+#datetime时间格式
+datet = '2016-01-01'
+bar_datetime = datetime.strptime(datet,'%Y-%m-%d')#将字符串转化为datetime类型数据
+bar_datetime_str = bar_datetime.strftime('%Y-%m-%d')#datetime类型数据转为字符串
+bar_datetime_str_100 = w.tdaysoffset(-100,bar_datetime_str).Data[0][0].strftime('%Y-%m-%d') #bar_datetime_str前推100个交易日
+
+#dataframe数据获取/新建空
+data_final = pd.DataFrame([],index = list_50, columns=['alpha'])
+#以list_50（字符串列表）为行索引，“alpha”为列索引新建dataframe
+raw_inds_ret = wa.prepare_raw_data('000016.SH','ev', bar_datetime_str_100, bar_datetime_str) 
+raw = wa.prepare_raw_data('000016.SH','pe_ttm,ps_ttm', bar_datetime_str_100, bar_datetime_str)
+#获得的dataframe为二重索引，横索引外层为日期，内层为股票名，纵索引为大写的因子或指标名
+
+#删去列
+raw_inds_ret.drop(['MKT_CAP_ASHARE', 'NEXT_RET'],axis=1,inplace=True)
+#第一个指标为要删去的列索引（字符串或字符串列表），第二个指标表明删去的为纵轴，第三个指标代表删去后改变原dataframe
+
+#合并列
+raw_inds_ret = raw_inds_ret.join(raw)
+#join方法按行索引合并dataframe，重复列我这里直接删除了。如果按照重复列索引可以使用merge方法，用法为result = pd.merge(left,right,on = '重复列名')
+
+#二重索引内外交换
+raw_inds_ret = raw_inds_ret.swaplevel()
+
+#按列索引
+raw_inds_ret['列索引']
+raw_inds_ret[数字]
+
+#按行索引：标签
+raw_inds_ret.loc['行一级索引']
+raw_inds_ret.loc['行一级索引',:]
+raw_inds_ret.loc['行一级索引','行二级索引']
+
+#按行索引：绝对位置
+raw_inds_ret.iloc[数字]
+
+#行列索引：
+raw_inds_ret.loc['行一级索引','行二级索引'][列索引或数字]
+
+#输出行索引的index列表
+re.index.levels[0]#一级索引
+re.index.levels[1]#二级索引
+
+#输出列索引的index列表
+re.column #若为多重，则同行索引，index改为column
